@@ -31,6 +31,20 @@ namespace Task1
             double num6= num2;
             decimal num7= num3;
             Console.WriteLine(string.Format("sbyte to float= {0}   int16 to doble= {1}   int32 to decimal= {2}", num5,  num6, num7 ));
+            
+            // boxing operation
+            Console.WriteLine("boxin operation a into o");
+            int a= 23;
+            object o= a;
+            Console.WriteLine($"a= {a},  o= {o}");
+
+            //unboxing operation
+
+            Console.WriteLine("unboxin operation o into c");
+            int c = Convert.ToInt32(o);
+            Console.WriteLine($"c= {c}");
+            
+            
             Console.ReadKey();
         }
     }
