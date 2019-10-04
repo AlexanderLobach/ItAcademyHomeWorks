@@ -18,7 +18,6 @@ namespace HW_05_Task1
             int [] mass2 = new int[5];
             for (i = 0; i < mass2.Length; i++)
             {
-
                 Console.WriteLine($"Enter value {i} for array mass2");
                 mass2[i] =Convert.ToInt32(Console.ReadLine());
             }
@@ -26,7 +25,6 @@ namespace HW_05_Task1
             int [] mass3 = new int[5];
             for (i = 0; i < mass3.Length; i++)
             {
-
                 mass3[i] = mass1[i] + mass2[i];
                 Console.WriteLine($"mass1[{i}] = {mass1[i]}      mass2[{i}] = {mass2[i]}       mass3[{i}] = {mass3[i]}"); 
             }
