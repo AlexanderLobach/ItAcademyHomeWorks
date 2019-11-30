@@ -58,7 +58,6 @@
       <HintPath>mysql-connector\v4.5.2\SshNet.Security.Cryptography.dll</HintPath>
     </Reference>
     <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -68,7 +67,6 @@
       <DeployService-Deploy>True</DeployService-Deploy>
     </Compile>
     <Compile Include="GetSetSqlData.cs" />
-    <Compile Include="Searcher.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
