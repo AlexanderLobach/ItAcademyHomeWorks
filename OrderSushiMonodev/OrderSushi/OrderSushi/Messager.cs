@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Globalization;
+using System.Drawing;
 
 
 namespace OrderSushi
 {
-	public class Messager : Sushi
+	public class Messager :  Sushi
 	{
 		public string messageBot { get; set; }
 		public string messageUser { get; set;}
 		public string messageBotErr { get; set; }
 		public string userName { get; set; }
-
+		public int quantitySushi{ get; set; }
 		const string botName = "Natalya";
+
+		public const int maxSushiOrder = 50;
 
 		const System.ConsoleColor colorBot = ConsoleColor.Green;
 		const System.ConsoleColor colorUser = ConsoleColor.Red;
@@ -29,13 +32,13 @@ namespace OrderSushi
 			Console.WriteLine($"{botName}:");
 			//Console.BackgroundColor = colorErr;
 			Console.WriteLine(this.messageBotErr);
-			Console.BackgroundColor = backgroundColorDefault;
+			//Console.BackgroundColor = backgroundColorDefault;
 		}
 		public void ReadMessageUser()
 		{
 			Console.ForegroundColor = colorUser;
 			Console.WriteLine("You:");
-			this.messageUser = Console.ReadLine();
+			this.messageUser = Console.ReadLine().ToLower();
 		}
 		public void Welcome()
 		{
@@ -90,71 +93,125 @@ namespace OrderSushi
 
 		public string OrderRequest()
 		{
-			this.sql = $"SELECT name FROM {nameSqlMenuList} WHERE id is not NULL";
+			string order;
+			bool orderOk = false;
+			do
+			{
 			GetSetSushilist();
-			messageBot = $"{this.userName}, do you want to order sushi is \n\t {this.SushiList}?";
+			messageBot = $"{this.userName}, do you want to order sushi is: \n ";
 			WriteMessageBot();
+			PrintSushiList();
 			ReadMessageUser();
-			string order = FindingMatches(this.messageUser , this.SushiList.Split(new char[] { ',' }));
-			this.messageBot = order;
+			order = Searcher.FindingMatches(this.messageUser , this.SushiList);
+			this.SushiName = order;
+			GetSushiInfo();
+			this.messageBot =$"You want order to {order} (yes or no)? ";
 			WriteMessageBot ();
+			PrintSushiInfo();
+				while (messageUser != "yes" || messageUser != "no")
+				{
+			ReadMessageUser();
+			if (messageUser == "yes")
+			{
+				this.messageBot = "please enter the quantity of selected sushi";
+				WriteMessageBot();
+				quantitySushi =  ReadNum();
+				this.messageUser = "no";
+			}
+				if (messageUser == "no")
+				{
+					this.messageBot = "do you want to order more sushi (yes or no) ?";
+					WriteMessageBot();
+					while (messageUser != "yes" )
+					{
+					ReadMessageUser();
+					if (messageUser == "yes")
+						{ break; }
+					if (messageUser == "no")
+					{ System.Environment.Exit(1);}
+					else { WriteErrAnswerYesNo(); }
+					}
+						if (messageUser == "yes") {break;}
+				}
+			else { WriteErrAnswerYesNo();}
+			}
+			}
+			while (orderOk == false );
 			return  order;
 		}
-		public string FindingMatches(string wordSearch, string[] words)
+		public int ReadNum()
 		{
-			int ws ;
-			int maxLength = 0;
-			int minLength = 0;
-			double[] similaratyPercent = new double[words.Length];
-			int[] similaraty = new int[words.Length];
-
-			for (ws = 0; ws < words.Length; )
+			string num;
+			bool numOk = false;
+			do
 			{
-				int wss = 0;
-				int wssS = 0;
-				String[] wordsSplit = words[ws].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-				String[] wordSearchSplit = wordSearch.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-				for ( wss = 0 ; wss < wordsSplit.Length ;)
+				ReadMessageUser();
+				num = messageUser;
+				if (num.Trim( ) == "")
 				{
-					for (wssS = 0; wssS < wordSearchSplit.Length; )
-					{
-						if ( wordsSplit[wss].Length > wordSearchSplit[wssS].Length ) 
-						{ minLength = wordSearchSplit[wssS].Length;}
-						else minLength = wordsSplit[wss].Length;
-
-						if ( wordsSplit[wss].Length < wordSearchSplit[wssS].Length ) 
-						{ maxLength = wordSearchSplit[wssS].Length;}
-						else maxLength = wordsSplit[wss].Length;
-
-						for (int i = 0; i < minLength; )
-						{
-							if (wordSearchSplit[wssS][i] == wordsSplit[wss][i])
-							{
-								similaraty[ws] = similaraty[ws] +1;
-							}
-							i ++;
-						}
-						wssS ++;
-					}
-					wss ++;
+					this.messageBotErr = $"You didn't enter anythin, {messageBot}";
+					WriteMessageBotErr();
 				}
-				similaratyPercent[ws] = Convert.ToDouble(similaraty[ws]) / Convert.ToDouble(maxLength) ;
-				Console.WriteLine(similaratyPercent[ws]);
-				ws ++;
+
+				else
+				{
+					for (int i = 0; i < num.Length; i++ )
+					{
+						if (Char.IsDigit(num[i]) != true )
+						{
+							this.messageBotErr = $"Incorrect format of the specified number, { messageBot }";
+							WriteMessageBotErr();
+							break;
+						}
+						if (i == num.Length-1 ) {numOk = true;}
+					}
+				}
 			}
-			double maxVal = MaxValue(similaratyPercent);
-			int indexMax = Array.FindIndex(similaratyPercent, x => x == maxVal);
-			return words[indexMax];
+			while (numOk == false);
+			return Convert.ToInt32(num);
 		}
-		public double MaxValue(double[] value)
+		public void PrintSushiList()
 		{
-			double maxValue = 0;
-			for (int i = 0; i < value.Length ;)
+			string[] List = SushiList.TrimEnd(';').Split(new string[] { ";" }, StringSplitOptions.None);
+			for (var i = 0; i < List.Length; i++) 
 			{
-				if ( maxValue < value[i] ) { maxValue = value[i]; }
-				i++;
+				this.messageBot = $"{i+1} {List[i]}";
+				Console.WriteLine(messageBot);
 			}
-			return maxValue;
 		}
+		public void PrintSushiInfo()
+		{
+			string[] List = SushiInfo.TrimEnd(';').Split(new string[] { ";" }, StringSplitOptions.None);
+			int[] dote = new int[List.Length];
+			string[] dotes = new string[List.Length];
+				for (int i = 0; i < List.Length; i++) 
+			{
+					dote [i] = (30 - List[i].Length);
+					for (var x = 0; x < dote[i]; x++)
+					{
+					dotes[i] += ".";
+					}
+				switch (i)
+				{
+				case 0:
+					this.messageBot = $"Price {dotes[i]} {List[i]}";
+					Console.WriteLine(messageBot);
+					break;
+				case 1:
+					this.messageBot = $"Weight {dotes[i]} {List[i]}";
+					Console.WriteLine(messageBot);
+					break;
+				case 2:
+					this.messageBot = $"Description:\n {List[i]}";
+					Console.WriteLine(messageBot);
+					break;
+				}
+			}
+		}
+					public void WriteErrAnswerYesNo()
+					{
+			this.messageBotErr = "I'm sorry, but you have to give a clear answer: Yes or no!";
+						WriteMessageBotErr();
+					}
 	} 
 }
