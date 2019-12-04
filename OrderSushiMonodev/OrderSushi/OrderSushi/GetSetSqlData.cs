@@ -17,7 +17,7 @@ namespace OrderSushi
 		const string connStr = "server=localhost;user=root;database=sushi_bot;password=mnenie;";
 		public const string nameSqlSushiList = "sushi_list";
 		public const string nameSqlOrderList = "order_list";
-		public const string nameSqlСlientList = "client_list";
+		public const string nameSqlСlientList = "clients";
 
 
 		public void  GetSqlData()
@@ -76,9 +76,19 @@ namespace OrderSushi
 				Console.WriteLine("Пустая выборка");
 			conn.Close();
 		}
-		public void CreateOrder()
+		public int InsertSqlData()
 		{
-
+			{
+				MySqlConnection conn = new MySqlConnection(connStr);
+				conn.Open();
+				MySqlCommand command = new MySqlCommand(sqlRequest, conn);
+				// выполняем запрос
+				//command.ExecuteNonQuery();
+				int ID = 0;
+				ID = Convert.ToInt16(command.ExecuteScalar());
+				return ID; 
+				//conn.Close();
+			}
 		}
 	}
 }

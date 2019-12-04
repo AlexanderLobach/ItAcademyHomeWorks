@@ -10,8 +10,7 @@ namespace OrderSushi
 		public string messageBot { get; set; }
 		public string messageUser { get; set;}
 		public string messageBotErr { get; set; }
-		public string userName { get; set; }
-		public int quantitySushi{ get; set; }
+
 		const string botName = "Natalya";
 
 		public const int maxSushiOrder = 50;
@@ -95,6 +94,7 @@ namespace OrderSushi
 		{
 			string order;
 			bool orderOk = false;
+			int y = 0;
 			do
 			{
 				GetSetSushilist();
@@ -115,7 +115,17 @@ namespace OrderSushi
 					{
 						this.messageBot = "please enter the quantity of selected sushi";
 						WriteMessageBot();
-						quantitySushi =  ReadNum();
+						this.quantitySushi =  ReadNum();
+						if (quantitySushi > 0 && y == 0)
+						{
+							CreateOrders();
+							AddGoods();
+							y++;
+						}
+						if (quantitySushi > 0 && y > 0)
+						{
+							AddGoods();
+						}
 						this.messageUser = "no";
 					}
 					if (messageUser == "no")
@@ -134,6 +144,7 @@ namespace OrderSushi
 						if (messageUser == "yes") {break;}
 					}
 					else { WriteErrAnswerYesNo();}
+
 				}
 			}
 			while (orderOk == false );
@@ -182,6 +193,7 @@ namespace OrderSushi
 		public void PrintSushiInfo()
 		{
 			string[] List = SushiInfo.TrimEnd(';').Split(new string[] { ";" }, StringSplitOptions.None);
+			this.CurrentIDSushi = Convert.ToInt32(List[0]);
 			int[] dote = new int[List.Length];
 			string[] dotes = new string[List.Length];
 			for (int i = 0; i < List.Length; i++) 
@@ -193,16 +205,16 @@ namespace OrderSushi
 				}
 				switch (i)
 				{
-				case 0:
-					this.messageBot = $"Price {dotes[i]} {List[i]}";
-					Console.WriteLine(messageBot);
-					break;
 				case 1:
-					this.messageBot = $"Weight {dotes[i]} {List[i]}";
+					this.messageBot = $"Price. {dotes[i]} {List[i]}";
 					Console.WriteLine(messageBot);
 					break;
 				case 2:
-					this.messageBot = $"Description:\n {List[i]}";
+					this.messageBot = $"Weight {dotes[i]} {List[i]}";
+					Console.WriteLine(messageBot);
+					break;
+				case 3:
+					this.messageBot = $"Description:\n{List[i]}";
 					Console.WriteLine(messageBot);
 					break;
 				}
