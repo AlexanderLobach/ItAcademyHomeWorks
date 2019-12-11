@@ -7,10 +7,11 @@ namespace OrderSushi
 {
 	public class Messager :  Sushi
 	{
+		public double currentPrice { get; set; }
 		public string messageBot { get; set; }
 		public string messageUser { get; set;}
 		public string messageBotErr { get; set; }
-
+		public string userName { get; set; }
 		const string botName = "Natalya";
 
 		public const int maxSushiOrder = 50;
@@ -37,7 +38,7 @@ namespace OrderSushi
 		{
 			Console.ForegroundColor = colorUser;
 			Console.WriteLine("You:");
-			this.messageUser = Console.ReadLine().ToLower();
+			this.messageUser = Console.ReadLine();
 		}
 		public void Welcome()
 		{
@@ -88,9 +89,10 @@ namespace OrderSushi
 			}
 			while (nameOk == false);
 			this.userName = name;
+			this.ClientName = userName;
 		}
 
-		public string OrderRequest()
+		public void OrderRequest()
 		{
 			string order;
 			bool orderOk = false;
@@ -108,48 +110,56 @@ namespace OrderSushi
 				this.messageBot =$"You want order to {order} (yes or no)? ";
 				WriteMessageBot ();
 				PrintSushiInfo();
-				while (messageUser != "yes" || messageUser != "no")
+				while (messageUser.ToLower() != "yes" )
 				{
 					ReadMessageUser();
-					if (messageUser == "yes")
+					if (messageUser.ToLower() == "yes")
 					{
 						this.messageBot = "please enter the quantity of selected sushi";
 						WriteMessageBot();
 						this.quantitySushi =  ReadNum();
-						if (quantitySushi > 0 && y == 0)
-						{
-							CreateOrders();
-							AddGoods();
-							y++;
-						}
 						if (quantitySushi > 0 && y > 0)
 						{
-							AddGoods();
+							this.orderAmount += quantitySushi * currentPrice ;
+							InsertGoodsOrders();
+						}
+						if (quantitySushi > 0 && y == 0)
+						{
+							this.orderAmount = quantitySushi * currentPrice ;
+							CreateOrder();
+							InsertGoodsOrders();
+							y++;
 						}
 						this.messageUser = "no";
-					}
-					if (messageUser == "no")
-					{
+						if (messageUser.ToLower() == "no")
+						{
 						this.messageBot = "do you want to order more sushi (yes or no) ?";
 						WriteMessageBot();
-						while (messageUser != "yes" )
+						while (messageUser.ToLower() != "yes" )
 						{
 							ReadMessageUser();
-							if (messageUser == "yes")
+							if (messageUser.ToLower() == "yes")
 							{ break; }
-							if (messageUser == "no")
+								if (messageUser.ToLower() == "no" && y == 0 )
 							{ System.Environment.Exit(1);}
+								if (messageUser.ToLower() == "no" && y > 0 )
+								{
+									orderOk = true;
+									break;
+								}
 							else { WriteErrAnswerYesNo(); }
 						}
-						if (messageUser == "yes") {break;}
+						if (messageUser.ToLower() == "yes") {break;}
+							if ( orderOk == true ) { break; }
 					}
 					else { WriteErrAnswerYesNo();}
-
+					}
 				}
 			}
 			while (orderOk == false );
-			return  order;
+			AddClientData();
 		}
+
 		public int ReadNum()
 		{
 			string num;
@@ -163,7 +173,6 @@ namespace OrderSushi
 					this.messageBotErr = $"You didn't enter anythin, {messageBot}";
 					WriteMessageBotErr();
 				}
-
 				else
 				{
 					for (int i = 0; i < num.Length; i++ )
@@ -181,6 +190,51 @@ namespace OrderSushi
 			while (numOk == false);
 			return Convert.ToInt32(num);
 		}
+
+		public string ReadNumPhone()
+		{
+			string numPhone;
+			bool numPhoneOk = false;
+			do
+			{
+			ReadMessageUser ();
+			numPhone = messageUser;
+				if (numPhone.Trim( ) == "")
+				{
+					this.messageBotErr = $"You didn't enter anythin, {messageBot}";
+					WriteMessageBotErr();
+				}
+				else if (numPhone[0] != '+' )
+				{
+					this.messageBotErr = $"Phone number entered incorrectly, {messageBot}";
+					WriteMessageBotErr(); 
+				}
+				else if (numPhone.Length < 13)
+				{
+					this.messageBotErr = $"Phone number entered incorrectly, {messageBot}";
+					WriteMessageBotErr();
+				}
+
+				else
+				{
+					{
+						for (int i = 1; i < numPhone.Length; i++ )
+						{
+							if (Char.IsDigit(numPhone[i]) != true )
+							{
+								this.messageBotErr = $"Phone number entered incorrectly, { messageBot }";
+								WriteMessageBotErr();
+								break;
+							}
+							if (i == numPhone.Length-1 ) {numPhoneOk = true;}
+						}
+					}
+				}
+			}
+			while( numPhoneOk == false );
+			return numPhone;
+		}
+
 		public void PrintSushiList()
 		{
 			string[] List = SushiList.TrimEnd(';').Split(new string[] { ";" }, StringSplitOptions.None);
@@ -190,10 +244,12 @@ namespace OrderSushi
 				Console.WriteLine(messageBot);
 			}
 		}
+
 		public void PrintSushiInfo()
 		{
 			string[] List = SushiInfo.TrimEnd(';').Split(new string[] { ";" }, StringSplitOptions.None);
 			this.CurrentIDSushi = Convert.ToInt32(List[0]);
+			this.currentPrice = Convert.ToDouble(List[1]);
 			int[] dote = new int[List.Length];
 			string[] dotes = new string[List.Length];
 			for (int i = 0; i < List.Length; i++) 
@@ -220,10 +276,28 @@ namespace OrderSushi
 				}
 			}
 		}
+
 		public void WriteErrAnswerYesNo()
 		{
 			this.messageBotErr = "I'm sorry, but you have to give a clear answer: Yes or no!";
 			WriteMessageBotErr();
+		}
+
+		public void AddClientData()
+		{
+			this.messageBot = $"{userName}, please provide shipping address or pickup";
+			WriteMessageBot();
+			ReadMessageUser();
+			this.DeliveryAddress = messageUser;
+			this.messageBot = $"{userName}, please enter your e-mail";
+			WriteMessageBot();
+			ReadMessageUser();
+			this.ClientEmail = messageUser;
+			this.messageBot = $"To complete the order, you must provide your phone number in the format +12345678910";
+			WriteMessageBot();
+			this.ClientNumberPhone = ReadNumPhone();
+			SqlAddClientData();
+			AddOrder();
 		}
 	} 
 }
