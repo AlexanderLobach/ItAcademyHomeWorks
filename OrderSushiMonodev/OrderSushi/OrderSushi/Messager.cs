@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using System.Drawing;
 
-
 namespace OrderSushi
 {
 	public class Messager :  Sushi
@@ -104,7 +103,14 @@ namespace OrderSushi
 				WriteMessageBot();
 				PrintSushiList();
 				ReadMessageUser();
-				order = Searcher.FindingMatches(this.messageUser , this.SushiList);
+				order = Searcher.FindingMatches( messageUser, SushiList );
+				if (order == "little coincidence")
+				{
+					this.messageBotErr = "I'm sorry, but you entered a strange query";
+					WriteMessageBotErr();
+				}
+				else
+				{
 				this.SushiName = order;
 				GetSushiInfo();
 				this.messageBot =$"You want order to {order} (yes or no)? ";
@@ -154,8 +160,11 @@ namespace OrderSushi
 					}
 					else { WriteErrAnswerYesNo();}
 					}
+						else if ( messageUser.ToLower() == "no" ){ break; }
+						else { WriteErrAnswerYesNo(); break; }
 				}
 			}
+		}
 			while (orderOk == false );
 			AddClientData();
 		}
@@ -234,6 +243,32 @@ namespace OrderSushi
 			while( numPhoneOk == false );
 			return numPhone;
 		}
+		public string ReadEmailAddress()
+		{
+
+			string emailAddress;
+			bool emailAddressOk = false;
+				do 
+			{
+				ReadMessageUser ();
+				emailAddress = messageUser;
+				int pozAt = emailAddress.IndexOf('@');
+				if (emailAddress.Trim( ) == "")
+				{
+					this.messageBotErr = $"You didn't enter anythin, {messageBot}";
+					WriteMessageBotErr();
+				}
+				else if (pozAt < 1 || pozAt == emailAddress.Length-1)
+				{ 
+					this.messageBotErr = $"{userName}, you entered an incorrect e-mail address.\nPlease enter the correct e-mail address.";
+					WriteMessageBotErr();
+				}
+				else
+				{ emailAddressOk = true; break; }
+			} 
+			while(emailAddressOk == false);
+					return emailAddress;
+		}
 
 		public void PrintSushiList()
 		{
@@ -291,13 +326,12 @@ namespace OrderSushi
 			this.DeliveryAddress = messageUser;
 			this.messageBot = $"{userName}, please enter your e-mail";
 			WriteMessageBot();
-			ReadMessageUser();
-			this.ClientEmail = messageUser;
+			this.ClientEmail = ReadEmailAddress();
 			this.messageBot = $"To complete the order, you must provide your phone number in the format +12345678910";
 			WriteMessageBot();
 			this.ClientNumberPhone = ReadNumPhone();
 			SqlAddClientData();
-			AddOrder();
+			UpdateOrder();
 		}
 	} 
 }

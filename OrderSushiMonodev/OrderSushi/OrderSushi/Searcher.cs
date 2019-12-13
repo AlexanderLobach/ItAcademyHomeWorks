@@ -4,16 +4,26 @@ namespace OrderSushi
 {
 	public class Searcher 
 	{
+		const double minThresholdSearch = 0.5;
+		const bool searchByIndex = true;
 
 		public static string FindingMatches(string wordSearch , string words)
 		{
 			int ws ;
 			int maxLength = 0;
 			int minLength = 0;
+			int indexWords;
+			int indexWordsMax;
 			string[] wordsList = words.Trim(';').Split(new char[] { ';' });
 			double[] similaratyPercent = new double[wordsList.Length];
 			int[] similaraty = new int[wordsList.Length];
-
+			indexWordsMax = wordsList.Length;
+			bool isNum = int.TryParse(wordSearch, out indexWords);
+			if (searchByIndex == true && isNum == true && indexWords <= indexWordsMax) 
+			{
+				return wordsList[indexWords-1];
+			}
+			else
 			for (ws = 0; ws < wordsList.Length; )
 			{
 				int wss = 0;
@@ -49,8 +59,15 @@ namespace OrderSushi
 				ws ++;
 			}
 			double maxVal = MaxValue(similaratyPercent);
-			int indexMax = Array.FindIndex(similaratyPercent, x => x == maxVal);
-			return wordsList[indexMax];
+			if (maxVal < minThresholdSearch) 
+			{
+				return "little coincidence";
+			} 
+			else 
+			{
+				int indexMax = Array.FindIndex (similaratyPercent, x => x == maxVal);
+				return wordsList [indexMax];
+			}
 		}
 
 		public static double MaxValue(double[] value)
