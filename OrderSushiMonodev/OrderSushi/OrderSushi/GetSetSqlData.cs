@@ -39,6 +39,7 @@ namespace OrderSushi
 		public int CurrentIDSushi { get; set; }
 		public int CurrentIDClient { get; set; }
 		public int CurrentClientDataID { get; set; }
+		public int sqlLastID { get; set; }
 		public string SushiName { get; set; }
 		public string SushiInfo { get; set; }
 		public string SushiList { get; set; }
@@ -49,7 +50,7 @@ namespace OrderSushi
 		public string sqlRequest { get; set; }
 		public string stringSqlData  { get; set; }
 		public string dataArrString { get; set; }
-		public int sqlLastID { get; set; }
+		public string dataOrder { get; set; }
 
 
 		public void  GetSqlData()

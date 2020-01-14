@@ -1,6 +1,10 @@
 using System;
+using System.IO;
+using System.Net;
+using System.Net.Mail;
 using System.Globalization;
 using System.Drawing;
+using System.Security.Cryptography.X509Certificates;
 
 namespace OrderSushi
 {
@@ -167,6 +171,8 @@ namespace OrderSushi
 		}
 			while (orderOk == false );
 			AddClientData();
+			PrintOrderInfo();
+			SendTheEmail ();
 		}
 
 		public int ReadNum()
@@ -333,5 +339,61 @@ namespace OrderSushi
 			SqlAddClientData();
 			UpdateOrder();
 		}
+
+		public void PrintOrderInfo()
+		{
+			OrderCheck();
+			this.messageBot = $"{userName}, please check your order...";
+			WriteMessageBot();
+			string[] List = dataOrder.TrimEnd(';').Split(new string[] { ";" }, StringSplitOptions.None);
+			this.messageBot = String.Format("{0, 3} {1, 20} {2, 10} {3,10} {4, 10}\n", "№", "Goods", "Weight", "Price", "Quantity");
+			Console.WriteLine(messageBot);
+			int y = 0;
+			int x = 0;
+			double amounth = 0;
+			for (var i = 0; i < List.Length/4; i++)
+			{
+				x = i + y;
+				this.messageBot = String.Format("{0, 3} {1, 20} {2, 10} {3,10} {4, 10}", i+1,  List[x],  List[x+1],  List[x+2], List[x+3]);
+				Console.WriteLine(messageBot);
+				y = y+3;
+				amounth += Convert.ToDouble (List [x + 2]) * Convert.ToDouble (List [x + 3]);
+				if (i == List.Length/4 - 1)
+				{
+					this.messageBot = "\namounth" + String.Format ("{0, 50:C}", amounth);
+					Console.WriteLine (messageBot);
+				}
+			}
+		}
+
+		public void SendTheEmail ()
+		{
+			var client = new SmtpClient("smtp.yandex.ru", 465);
+			client.UseDefaultCredentials =false;
+			MailAddress from = new MailAddress("ordersushi@ya.ru", "Alex");
+			MailAddress to = new MailAddress("375296255246@ya.ru", "Pedro");
+			MailMessage message = new MailMessage(from, to); 
+			message.Subject = "Test";
+			message.Body = "Email-test of the smtp client's work";
+			message.IsBodyHtml = true;
+			client.EnableSsl = true;
+			client.DeliveryMethod = SmtpDeliveryMethod.Network;
+			client.Credentials = new NetworkCredential("ordersushi", "huizqwrifvvgptsq");
+			try
+			{
+				client.Send(message);
+				Console.WriteLine("Message send");
+				Console.ReadLine();
+			}
+			catch (Exception exc)
+			{
+				Console.WriteLine("Could not send e-mail. Exception caught: " + exc);
+			}
+			finally
+			{
+				client.Dispose();
+			}
+		}
 	} 
 }
+

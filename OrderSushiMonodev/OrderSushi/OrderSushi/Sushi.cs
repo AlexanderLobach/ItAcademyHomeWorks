@@ -45,5 +45,11 @@ namespace OrderSushi
 			this.sqlRequest = $"UPDATE `{nameSqlOrderList}` SET `{nameSqlClientID}` = '{CurrentIDClient}', `{nameSqlOrderAmount}` = ?orderAmount, `{nameSqlOrderShippigAddress}` = ?DeliveryAddress, `{nameSqlOrderStatus}` = ?Taken WHERE `{nameSqlOrderID}` = {CurrentIDOrder};";
 			UpdateSqlOrders();
 		}
+		public void OrderCheck()
+		{
+			this.sqlRequest = $"SELECT sushi_name, sushi_weight, sushi_price, quantity_goods FROM sushi_list NATURAL JOIN goods_orders WHERE order_id = {CurrentIDOrder} ;";
+			GetSqlArray();
+			this.dataOrder = dataArrString;
+		}
 	}
 }

@@ -14,9 +14,10 @@ namespace OrderSushi
 		static void Main(string[] args)
 		{
 			Messager messager = new Messager();
-			messager.Welcome();
-			messager.ReadName();
-			messager.OrderRequest();
+			//messager.Welcome();
+			//messager.ReadName();
+			//messager.OrderRequest();
+			messager.SendTheEmail ();
 		}
 	}
 }

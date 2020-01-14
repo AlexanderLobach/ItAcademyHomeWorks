@@ -57,8 +57,11 @@
     <Reference Include="SshNet.Security.Cryptography">
       <HintPath>mysql-connector\v4.5.2\SshNet.Security.Cryptography.dll</HintPath>
     </Reference>
-    <Reference Include="System.Data" />
+    <Reference Include="Microsoft.Web.XmlTransform">
+      <HintPath>bin\Debug\Microsoft.Web.XmlTransform.dll</HintPath>
+    </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -71,4 +74,7 @@
     <Compile Include="Searcher.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>
