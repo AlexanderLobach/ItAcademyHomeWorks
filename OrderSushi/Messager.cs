@@ -116,7 +116,7 @@ namespace OrderSushi
 			int y = 0;
 			do
 			{
-				GetSetSushilist();
+				GetSushiList();
 				messageBot = $"{this.userName}, do you want to order sushi is: \n ";
 				WriteMessageBot();
 				PrintSushiList();
@@ -154,6 +154,7 @@ namespace OrderSushi
 							InsertGoodsOrders();
 							y++;
 						}
+						if ( quantitySushi == 0 ) { this.messageUser = "no"; }
 						this.messageUser = "no";
 						if (messageUser.ToLower() == "no")
 						{
@@ -352,6 +353,9 @@ namespace OrderSushi
 				this.messageBot = $"{userName}, please enter your e-mail";
 			WriteMessageBot();
 			this.ClientEmail = ReadEmailAddress();
+			GetPresenceClientEmail();
+			if( presenceClientEmail == 0 )
+			{
 			Random rnd = new Random();
             this.securityCode = rnd.Next(9999).ToString();
 			this.messageBot = $"{userName}, a security code has been sent to your email address, please enter the security code received in your email:";
@@ -365,6 +369,8 @@ namespace OrderSushi
 				else { this.messageBotErr = $"{userName}, the security code, you entered, - is incorrect."; 
 				WriteMessageBotErr();}
 			}
+			}
+			else clientEmailOk = true;
 			
 			} while( clientEmailOk == false );
 			
@@ -406,6 +412,7 @@ namespace OrderSushi
 			stringEmail.Append("<br>"+messageBot+"<br>");
 			Console.WriteLine(messageBot);
 			this.messageBot = String.Format("{0, 17} {1, 46}", "Your phone number:", ClientNumberPhone);
+			stringEmail.Append("<br>"+messageBot);
 			Console.WriteLine(messageBot);
 			this.messageBot = String.Format("{0,17} {1, 45}", "Your email address:", ClientEmail);
 			stringEmail.Append("<br>"+messageBot);

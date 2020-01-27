@@ -32,7 +32,7 @@ namespace OrderSushi
 		public const string nameSqlOrderAmount = "amount";
 		public const string nameSqlOrderShippigAddress = "shipping_address";
 		public const string nameSqlOrderStatus = "order_status";
-		internal const string bodypuss = "huizqwrifvvgptsq";
+		protected const string bodypuss = "huizqwrifvvgptsq";
 
 		public int quantitySushi { get; set; }
 		public double orderAmount { get; set; }
@@ -52,6 +52,7 @@ namespace OrderSushi
 		public string stringSqlData  { get; set; }
 		public string dataArrString { get; set; }
 		public string dataOrder { get; set; }
+		internal int presenceClientEmail{ get; set; }
 
 
 		public void  GetSqlData()
@@ -59,9 +60,8 @@ namespace OrderSushi
 			MySqlConnection conn = new MySqlConnection(connStr);
 			conn.Open();
 			MySqlCommand command = new MySqlCommand(sqlRequest, conn);
-			string name = command.ExecuteScalar().ToString();
-			Console.WriteLine(name); 
-			this.stringSqlData = name;
+			string data = command.ExecuteScalar().ToString();
+			this.stringSqlData = data;
 			conn.Close();
 		}
 		public void GetSqlArray()

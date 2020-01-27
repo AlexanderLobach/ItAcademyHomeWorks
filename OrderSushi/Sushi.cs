@@ -5,7 +5,7 @@ namespace OrderSushi
 	public class Sushi : GetSetSqlData
 	{
 
-		public void GetSetSushilist()
+		public void GetSushiList()
 		{
 			this.sqlRequest = $"SELECT sushi_name FROM {nameSqlGoodsList} WHERE sushi_id is not NULL";
 			GetSqlArray ();
@@ -50,6 +50,12 @@ namespace OrderSushi
 			this.sqlRequest = $"SELECT sushi_name, sushi_weight, sushi_price, quantity_goods FROM sushi_list NATURAL JOIN goods_orders WHERE order_id = {CurrentIDOrder} ;";
 			GetSqlArray();
 			this.dataOrder = dataArrString;
+		}
+		internal void GetPresenceClientEmail()
+		{
+			this.sqlRequest = $"SELECT COUNT(client_email) FROM clients_data WHERE client_email = \"{ClientEmail}\"";
+			GetSqlData();
+			this.presenceClientEmail = Convert.ToInt16(stringSqlData);
 		}
 	}
 }
