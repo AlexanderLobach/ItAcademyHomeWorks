@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Mail;
 using System.Text;
 using System.Globalization;
-using RazorEngine.Templating;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -28,6 +27,7 @@ namespace OrderSushi
 		internal string stringEmailCheck {get; set;}
 		internal string botName = "Natalya";
 		internal string securityCode;
+		internal int numberProductItems;
 		internal bool sendTheEmailOk = false;
 
 		public const int maxSushiOrder = 50;
@@ -387,6 +387,7 @@ namespace OrderSushi
 			this.messageBot = $"{userName}, please check your order...";
 			WriteMessageBot();
 			string[] List = dataOrder.TrimEnd(';').Split(new string[] { ";" }, StringSplitOptions.None);
+			
 			this.messageBot = String.Format("{0, 3} {1, 20} {2, 10} {3,10} {4, 10}\n", "№", "Goods", "Weight", "Price", "Quantity");
 			StringBuilder stringEmail= new StringBuilder("<p>"+messageBot);
 			Console.WriteLine(messageBot);
@@ -395,9 +396,11 @@ namespace OrderSushi
 			double amounth = 0;
 			for (var i = 0; i < List.Length/4; i++)
 			{
+				GetOrderPicture(i);
 				x = i + y;
 				this.messageBot = String.Format("{0, 3} {1, 20} {2, 10} {3,10} {4, 10}", i+1,  List[x],  List[x+1],  List[x+2], List[x+3]);
-				stringEmail.Append("<br>"+messageBot);
+				stringEmail.Append($"<br><img src=\"cid:imageId{i}\"  width=\"50\"  height=\"50\" ><br>"+messageBot);
+				
 				Console.WriteLine(messageBot);
 				y = y+3;
 				amounth += Convert.ToDouble (List [x + 2]) * Convert.ToDouble (List [x + 3]);
@@ -406,6 +409,7 @@ namespace OrderSushi
 					this.messageBot = "\nTotal payable:" + String.Format ("{0, 50:C}", amounth);
 					stringEmail.Append("<br>"+messageBot);
 					Console.WriteLine (messageBot);
+					numberProductItems = i;
 				}
 			}
 			this.messageBot = String.Format("\n{0, 17} {1, 46}","Delevery address:", DeliveryAddress);
@@ -432,8 +436,19 @@ namespace OrderSushi
 			message.Body = body;
 			message.IsBodyHtml = true;
 			AlternateView html_view = AlternateView.CreateAlternateViewFromString(message.Body, null, "text/html");
+			for (int i = 0; i<= numberProductItems; i++)
+			{
+			LinkedResource imagelink = new LinkedResource(@$"{i}.jpg", "image/jpg");
+			imagelink.ContentId = $"imageId{i}";
+			imagelink.TransferEncoding = System.Net.Mime.TransferEncoding.Base64;
+			html_view.LinkedResources.Add(imagelink);
+			}
+			message.SubjectEncoding = Encoding.GetEncoding("UTF-8");
+            message.BodyEncoding = Encoding.GetEncoding("UTF-8");
+			message.AlternateViews.Add(html_view);
 			client.EnableSsl = true;
 			client.DeliveryMethod = SmtpDeliveryMethod.Network;
+			
 			client.Credentials = new NetworkCredential("ordersushi", bodypuss);
 			try
 			{

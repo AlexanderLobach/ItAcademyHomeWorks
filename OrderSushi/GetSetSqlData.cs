@@ -17,7 +17,7 @@ namespace OrderSushi
 		public const string nameSqlOrderID = "order_id";
 		public const string nameSqlOrderDate = "order_date";
 		public const string nameSqlGoodsID = "sushi_id";
-		public const string nameSqlGoodsViev = "sudhi_view";
+		public const string nameSqlGoodsViev = "sushi_view";
 		public const string nameSqlGoodsOrders = "goods_orders";
 		public const string nameSqlGoodsQuantity = "quantity_goods";
 		public const string nameSqlShippingAddress = "shipping_address";
@@ -68,8 +68,8 @@ namespace OrderSushi
 		{
 			MySqlConnection conn = new MySqlConnection(connStr);
 			conn.Open();
-			MySqlCommand command = new MySqlCommand(sqlRequest, conn);
-			MySqlDataReader reader = command.ExecuteReader();
+			MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+			MySqlDataReader reader = sqlCommand.ExecuteReader();
 			this.dataArrString = null;
 			while (reader.Read())
 			{
@@ -81,63 +81,71 @@ namespace OrderSushi
 			reader.Close();
 			conn.Close();
 		}
-		public static void SavePicture()
+		public void SaveSqlPicture(int numPicture)
 		{
 			MySqlConnection conn = new MySqlConnection(connStr);
 			conn.Open();
-			MySqlCommand sqlCommand = new MySqlCommand("SELECT sushi_view FROM sushi_list WHERE sushi_id = 1", conn);
+			MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
 			MySqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+			
 			if (sqlDataReader.HasRows)
 			{
 				MemoryStream memoryStream = new MemoryStream();
 				foreach(DbDataRecord record in sqlDataReader)
-				memoryStream.Write((byte[])record[nameSqlGoodsViev], 0, ((byte[])record[nameSqlGoodsViev]).Length);
-				Image image = Image.FromStream(memoryStream);
-				image.Save(@"1.jpg");
-				memoryStream.Dispose();
-				image.Dispose();
+				
+				{
+					int i = 0;
+					memoryStream.Write((byte[])record[nameSqlGoodsViev], 0, ((byte[])record[nameSqlGoodsViev]).Length);
+					Image image = Image.FromStream(memoryStream);
+					image.Save(@$"{numPicture}.jpg");
+					memoryStream.Dispose();
+					image.Dispose();
+					i++;
+				}
+				
 			}
 			else
 				Console.WriteLine("A blank sample");
 			conn.Close();
+			sqlDataReader.Close();
 		}
 		public void InsertSqlData()
 		{
 				MySqlConnection conn = new MySqlConnection(connStr);
 				conn.Open();
-				MySqlCommand command = new MySqlCommand(sqlRequest, conn);
-				this.sqlLastID = Convert.ToInt16(command.ExecuteScalar());
+				MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+				this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
 			conn.Close();
 		}
 		public void InsertSqlClientsData()
 		{
 				MySqlConnection conn = new MySqlConnection(connStr);
 				conn.Open();
-				MySqlCommand command = new MySqlCommand(sqlRequest, conn);
-				command.Parameters.Add("?ClientNumberPhone", MySqlDbType.VarChar).Value = ClientNumberPhone;
-				command.Parameters.Add("?ClientEmail", MySqlDbType.VarChar).Value = ClientEmail;
-				command.Parameters.Add("?DeliveryAddress", MySqlDbType.VarChar).Value = DeliveryAddress;
-				this.sqlLastID = Convert.ToInt16(command.ExecuteScalar());
+				MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+				sqlCommand.Parameters.Add("?ClientNumberPhone", MySqlDbType.VarChar).Value = ClientNumberPhone;
+				sqlCommand.Parameters.Add("?ClientEmail", MySqlDbType.VarChar).Value = ClientEmail;
+				sqlCommand.Parameters.Add("?DeliveryAddress", MySqlDbType.VarChar).Value = DeliveryAddress;
+				this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
 				conn.Close();
 		}
 		public void InsertSqlClientList()
 		{
 				MySqlConnection conn = new MySqlConnection(connStr);
 				conn.Open();
-				MySqlCommand command = new MySqlCommand(sqlRequest, conn);
-				command.Parameters.Add("?ClientName", MySqlDbType.VarChar).Value = ClientName;
-				this.sqlLastID = Convert.ToInt16(command.ExecuteScalar());
+				MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+				sqlCommand.Parameters.Add("?ClientName", MySqlDbType.VarChar).Value = ClientName;
+				this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
 				conn.Close();
 		}
 		public void UpdateSqlOrders()
 		{
 			MySqlConnection conn = new MySqlConnection(connStr);
 			conn.Open();
-			MySqlCommand command = new MySqlCommand(sqlRequest, conn);
-			command.Parameters.Add("?orderAmount", MySqlDbType.Double).Value = orderAmount;
-			command.Parameters.Add("?DeliveryAddress", MySqlDbType.VarChar).Value = DeliveryAddress;
-			command.Parameters.Add("?Taken", MySqlDbType.VarChar).Value = "Taken";
-			this.sqlLastID = Convert.ToInt16(command.ExecuteScalar());
+			MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+			sqlCommand.Parameters.Add("?orderAmount", MySqlDbType.Double).Value = orderAmount;
+			sqlCommand.Parameters.Add("?DeliveryAddress", MySqlDbType.VarChar).Value = DeliveryAddress;
+			sqlCommand.Parameters.Add("?Taken", MySqlDbType.VarChar).Value = "Taken";
+			this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
 			conn.Close();
 		}
 	}

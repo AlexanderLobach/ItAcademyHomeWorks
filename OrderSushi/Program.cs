@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using System.Data.Common;
 using System.Drawing;
-using RazorEngine.Templating;
 
 namespace OrderSushi
 {
@@ -19,6 +18,7 @@ namespace OrderSushi
 			messager.Welcome();
 			messager.ReadName();
 			messager.OrderRequest();
+			
 		}
 	}
 }

@@ -57,5 +57,10 @@ namespace OrderSushi
 			GetSqlData();
 			this.presenceClientEmail = Convert.ToInt16(stringSqlData);
 		}
+		public void GetOrderPicture( int numPicture)
+		{
+			this.sqlRequest = $"SELECT sushi_view FROM sushi_list NATURAL JOIN goods_orders WHERE order_id = {CurrentIDOrder} LIMIT {numPicture},1";
+			SaveSqlPicture(numPicture);
+		}
 	}
 }
