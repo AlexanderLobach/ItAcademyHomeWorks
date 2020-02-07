@@ -18,7 +18,6 @@ namespace OrderSushi
 			messager.Welcome();
 			messager.ReadName();
 			messager.OrderRequest();
-			
 		}
 	}
 }

@@ -6,11 +6,13 @@ using MySql.Data.MySqlClient;
 using System.Data.Common;
 using System.Drawing;
 using System.IO;
+using NLog;
 
 namespace OrderSushi
 {
 	public class GetSetSqlData 
 	{
+		internal static Logger logger = LogManager.GetCurrentClassLogger();
 		const string connStr = "server=localhost;user=root;database=sushi_bot;password=mnenie;";
 		public const string nameSqlGoodsList = "sushi_list";
 		public const string nameSqlOrderList = "orders";
@@ -58,95 +60,198 @@ namespace OrderSushi
 		public void  GetSqlData()
 		{
 			MySqlConnection conn = new MySqlConnection(connStr);
-			conn.Open();
 			MySqlCommand command = new MySqlCommand(sqlRequest, conn);
-			string data = command.ExecuteScalar().ToString();
-			this.stringSqlData = data;
-			conn.Close();
+			try
+			{
+				conn.Open();
+				string data = command.ExecuteScalar().ToString();
+				this.stringSqlData = data;
+			}
+			catch( Exception exc)
+			{
+				logger.Fatal("Unable to load data from the database:" + exc);
+			}
+			 finally
+            {
+                conn.Close();
+            }  
 		}
 		public void GetSqlArray()
 		{
 			MySqlConnection conn = new MySqlConnection(connStr);
-			conn.Open();
-			MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
-			MySqlDataReader reader = sqlCommand.ExecuteReader();
-			this.dataArrString = null;
-			while (reader.Read())
+			try
 			{
-				for (var i = 0; i < reader.FieldCount; i++)
+				conn.Open();
+				MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+				MySqlDataReader reader = sqlCommand.ExecuteReader();
+				this.dataArrString = null;
+				if (reader.HasRows)
 				{
-					this.dataArrString += String.Format ("{0};", reader [i]);
+					while (reader.Read())
+					{
+						for (var i = 0; i < reader.FieldCount; i++)
+						{
+							this.dataArrString += String.Format ("{0};", reader [i]);
+						}
+					}
 				}
+				else
+					{
+						logger.Fatal("Empty database!");
+					}
+				reader.Close();
 			}
-			reader.Close();
+			catch (Exception exc)
+			{
+				logger.Fatal(exc);
+			}
+			finally
+			{
 			conn.Close();
+			}
 		}
 		public void SaveSqlPicture(int numPicture)
 		{
 			MySqlConnection conn = new MySqlConnection(connStr);
-			conn.Open();
-			MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
-			MySqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
-			
-			if (sqlDataReader.HasRows)
+			try
 			{
-				MemoryStream memoryStream = new MemoryStream();
-				foreach(DbDataRecord record in sqlDataReader)
-				
+				conn.Open();
+				MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+				MySqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+			
+				if (sqlDataReader.HasRows)
 				{
-					int i = 0;
-					memoryStream.Write((byte[])record[nameSqlGoodsViev], 0, ((byte[])record[nameSqlGoodsViev]).Length);
-					Image image = Image.FromStream(memoryStream);
-					image.Save(@$"{numPicture}.jpg");
-					memoryStream.Dispose();
-					image.Dispose();
-					i++;
+					MemoryStream memoryStream = new MemoryStream();
+					foreach(DbDataRecord record in sqlDataReader)
+					{
+						int i = 0;
+						memoryStream.Write((byte[])record[nameSqlGoodsViev], 0, ((byte[])record[nameSqlGoodsViev]).Length);
+						Image image = Image.FromStream(memoryStream);
+						CreateFolder("pictures/");
+						image.Save(@$"pictures/{numPicture}.jpg");
+						memoryStream.Dispose();
+						image.Dispose();
+						i++;
+					}
+					logger.Info("SaveSqlPicture - OK!");
 				}
-				
+				else 
+				{
+					Console.WriteLine("A blank sample");
+					logger.Warn("A blank sample");
+				}
+				sqlDataReader.Close();
 			}
-			else
-				Console.WriteLine("A blank sample");
-			conn.Close();
-			sqlDataReader.Close();
+			catch(Exception exc)
+			{
+				logger.Error(exc);
+			}	
+			finally
+			{
+				conn.Close();
+			}	
 		}
 		public void InsertSqlData()
 		{
 				MySqlConnection conn = new MySqlConnection(connStr);
-				conn.Open();
-				MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
-				this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
+				try
+				{
+					conn.Open();
+					MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+					this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
+					logger.Info("InsertSQLData - OK!");
+				}
+				catch(Exception exc)
+				{
+					logger.Fatal(exc);
+				}
 			conn.Close();
 		}
 		public void InsertSqlClientsData()
 		{
 				MySqlConnection conn = new MySqlConnection(connStr);
-				conn.Open();
-				MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
-				sqlCommand.Parameters.Add("?ClientNumberPhone", MySqlDbType.VarChar).Value = ClientNumberPhone;
-				sqlCommand.Parameters.Add("?ClientEmail", MySqlDbType.VarChar).Value = ClientEmail;
-				sqlCommand.Parameters.Add("?DeliveryAddress", MySqlDbType.VarChar).Value = DeliveryAddress;
-				this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
+				try
+				{
+					conn.Open();
+					MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+					sqlCommand.Parameters.Add("?ClientNumberPhone", MySqlDbType.VarChar).Value = ClientNumberPhone;
+					sqlCommand.Parameters.Add("?ClientEmail", MySqlDbType.VarChar).Value = ClientEmail;
+					sqlCommand.Parameters.Add("?DeliveryAddress", MySqlDbType.VarChar).Value = DeliveryAddress;
+					this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
+					logger.Info("InsertSQLClientsData - OK!");
+				}
+				catch (Exception exc)
+				{
+					logger.Fatal(exc);
+				}	
 				conn.Close();
+				
 		}
 		public void InsertSqlClientList()
 		{
 				MySqlConnection conn = new MySqlConnection(connStr);
-				conn.Open();
-				MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
-				sqlCommand.Parameters.Add("?ClientName", MySqlDbType.VarChar).Value = ClientName;
-				this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
+				try
+				{
+					conn.Open();
+					MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+					sqlCommand.Parameters.Add("?ClientName", MySqlDbType.VarChar).Value = ClientName;
+					this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
+					logger.Info("InsertSqlClientList - OK!");
+				}
+				catch (Exception exc)
+				{
+					logger.Fatal(exc);
+				}	
 				conn.Close();
 		}
 		public void UpdateSqlOrders()
 		{
 			MySqlConnection conn = new MySqlConnection(connStr);
-			conn.Open();
-			MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
-			sqlCommand.Parameters.Add("?orderAmount", MySqlDbType.Double).Value = orderAmount;
-			sqlCommand.Parameters.Add("?DeliveryAddress", MySqlDbType.VarChar).Value = DeliveryAddress;
-			sqlCommand.Parameters.Add("?Taken", MySqlDbType.VarChar).Value = "Taken";
-			this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
+			try
+			{
+				conn.Open();
+				MySqlCommand sqlCommand = new MySqlCommand(sqlRequest, conn);
+				sqlCommand.Parameters.Add("?orderAmount", MySqlDbType.Double).Value = orderAmount;
+				sqlCommand.Parameters.Add("?DeliveryAddress", MySqlDbType.VarChar).Value = DeliveryAddress;
+				sqlCommand.Parameters.Add("?Taken", MySqlDbType.VarChar).Value = "Taken";
+				this.sqlLastID = Convert.ToInt16(sqlCommand.ExecuteScalar());
+				logger.Info("UpdateSqlOrders - OK!");
+			}
+			catch (Exception exc)
+			{
+				logger.Fatal(exc);
+			}
 			conn.Close();
+		}
+		public void CreateFolder(string FolderName)
+		{
+			string path = @$"{FolderName}";
+						DirectoryInfo dirInfo = new DirectoryInfo(path);
+						if (!dirInfo.Exists)
+						{
+							try
+							{
+								dirInfo.Create();
+								logger.Info($"Created Folder {FolderName} - OK!");
+							}
+							catch (Exception exc)
+							{
+								logger.Error(exc);
+							}
+						}
+		}
+		public void DeleteFolder(string dirName)
+		{
+			try
+			{
+   				DirectoryInfo dirInfo = new DirectoryInfo(dirName);
+    			dirInfo.Delete(true);
+    			logger.Info($"Folder {dirName} is deleted.");
+			}
+			catch (Exception exc)
+			{
+    			logger.Error(exc);
+			}
 		}
 	}
 }

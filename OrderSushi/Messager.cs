@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Security.Policy;
+using NLog;
 
 
 
@@ -17,6 +18,7 @@ namespace OrderSushi
 	
 	public class Messager :  Sushi
 	{ 
+		
 		static readonly string TemplateFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EmailTemplates");
 
 		public double currentPrice { get; set; }
@@ -48,8 +50,9 @@ namespace OrderSushi
 			Console.ForegroundColor = colorBot;
 			Console.WriteLine($"{botName}:");
 			//Console.BackgroundColor = colorErr;
-			Console.WriteLine(this.messageBotErr);
+			Console.WriteLine(messageBotErr);
 			//Console.BackgroundColor = backgroundColorDefault;
+			logger.Warn("Message Bot Err: " + messageBotErr);
 		}
 		public void ReadMessageUser()
 		{
@@ -70,6 +73,7 @@ namespace OrderSushi
 				solutionTime = $"Good night! {solution}";
 			this.messageBot = solutionTime;
 			WriteMessageBot();
+			logger.Info("Welcome message - OK!");
 		}
 		public void ReadName()
 		{	
@@ -107,6 +111,7 @@ namespace OrderSushi
 			while (nameOk == false);
 			this.userName = name;
 			this.ClientName = userName;
+			logger.Info("ReadName - OK!");
 		}
 
 		public void OrderRequest()
@@ -301,6 +306,7 @@ namespace OrderSushi
 				this.messageBot = $"{i+1} {List[i]}";
 				Console.WriteLine(messageBot);
 			}
+			logger.Info("PrintSushiList - OK!");
 		}
 
 		public void PrintSushiInfo()
@@ -333,6 +339,7 @@ namespace OrderSushi
 					break;
 				}
 			}
+			logger.Info("PrintSushiInfo - OK!");
 		}
 
 		public void WriteErrAnswerYesNo()
@@ -379,11 +386,12 @@ namespace OrderSushi
 			this.ClientNumberPhone = ReadNumPhone();
 			SqlAddClientData();
 			UpdateOrder();
+			logger.Info("AddClientData - OK!");
 		}
 
 		public void PrintOrderInfo()
 		{
-			OrderCheck();
+			GetOrderCheck();
 			this.messageBot = $"{userName}, please check your order...";
 			WriteMessageBot();
 			string[] List = dataOrder.TrimEnd(';').Split(new string[] { ";" }, StringSplitOptions.None);
@@ -423,6 +431,7 @@ namespace OrderSushi
 			Console.WriteLine(messageBot);
 			this.stringEmailCheck = stringEmail.ToString();
 			this.messageBot = "a message with the details of your order has been sent to your email. Please review it carefully.";
+			logger.Info("PrintOrderInfo - OK!");
 		}
 
 		internal void SendTheEmail ( string body )
@@ -436,12 +445,23 @@ namespace OrderSushi
 			message.Body = body;
 			message.IsBodyHtml = true;
 			AlternateView html_view = AlternateView.CreateAlternateViewFromString(message.Body, null, "text/html");
-			for (int i = 0; i<= numberProductItems; i++)
+			if ( getOrderPictureOk == true )
 			{
-			LinkedResource imagelink = new LinkedResource(@$"{i}.jpg", "image/jpg");
-			imagelink.ContentId = $"imageId{i}";
-			imagelink.TransferEncoding = System.Net.Mime.TransferEncoding.Base64;
-			html_view.LinkedResources.Add(imagelink);
+				for (int i = 0; i<= numberProductItems; i++)
+				{
+					try
+					{			
+					LinkedResource imagelink = new LinkedResource(@$"pictures/{i}.jpg", "image/jpg");
+					imagelink.ContentId = $"imageId{i}";
+					imagelink.TransferEncoding = System.Net.Mime.TransferEncoding.Base64;
+					html_view.LinkedResources.Add(imagelink);
+					logger.Debug($"Added image link id{i} to Email");
+					}
+					catch (Exception exc)
+					{
+						logger.Error($"The link to the image id = {i} cannot be added "+ exc);
+					}
+				}
 			}
 			message.SubjectEncoding = Encoding.GetEncoding("UTF-8");
             message.BodyEncoding = Encoding.GetEncoding("UTF-8");
@@ -455,15 +475,18 @@ namespace OrderSushi
 				client.Send(message);
 				WriteMessageBot();
 				this.sendTheEmailOk = true;
+				logger.Info("SendTheEmail - OK!");
 			}
 			
 			catch (Exception exc)
 			{
-				messageBotErr = "Could not send e-mail. Exception caught: " + exc;
+				messageBotErr = "Could not send e-mail.";
 				WriteMessageBotErr();
+				logger.Fatal("Could not send e-mail. Exception caught: " + exc );
 			}
 			finally
 			{
+				DeleteFolder("pictures/");
 				client.Dispose();
 			}
 		}		
