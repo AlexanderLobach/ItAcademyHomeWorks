@@ -8,13 +8,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Security.Policy;
+using System.Threading;
 using NLog;
-
-
 
 namespace OrderSushi
 {
-	
 	
 	public class Messager :  Sushi
 	{ 
@@ -139,10 +137,10 @@ namespace OrderSushi
 				this.messageBot =$"You want order to {order} (yes or no)? ";
 				WriteMessageBot ();
 				PrintSushiInfo();
-				while (messageUser.ToLower() != "yes" )
+				while (messageUser.ToLower() != "yes" || messageUser.ToLower() != "y")
 				{
 					ReadMessageUser();
-					if (messageUser.ToLower() == "yes")
+					if (messageUser.ToLower() == "yes" || messageUser.ToLower() == "y")
 					{
 						this.messageBot = "please enter the quantity of selected sushi";
 						WriteMessageBot();
@@ -184,7 +182,7 @@ namespace OrderSushi
 					}
 					else { WriteErrAnswerYesNo();}
 					}
-						else if ( messageUser.ToLower() == "no" ){ break; }
+						else if ( messageUser.ToLower() == "no" || messageUser.ToLower() == "n" ){ break; }
 						else { WriteErrAnswerYesNo(); break; }
 				}
 			}
@@ -358,26 +356,26 @@ namespace OrderSushi
 			bool clientEmailOk = false;
 			do{
 				this.messageBot = $"{userName}, please enter your e-mail";
-			WriteMessageBot();
-			this.ClientEmail = ReadEmailAddress();
-			GetPresenceClientEmail();
-			if( presenceClientEmail == 0 )
-			{
-			Random rnd = new Random();
-            this.securityCode = rnd.Next(9999).ToString();
-			this.messageBot = $"{userName}, a security code has been sent to your email address, please enter the security code received in your email:";
-			string bodySecur  = secCode.CreateConfirmEmail( userName, securityCode );
-			SendTheEmail(bodySecur);
-			if ( sendTheEmailOk == true ) 
-			{
-				ReadMessageUser();				
-				if ( securityCode == messageUser )
-				{clientEmailOk = true;}
-				else { this.messageBotErr = $"{userName}, the security code, you entered, - is incorrect."; 
-				WriteMessageBotErr();}
-			}
-			}
-			else clientEmailOk = true;
+				WriteMessageBot();
+				this.ClientEmail = ReadEmailAddress();
+				GetPresenceClientEmail();
+				if( presenceClientEmail == 0 )
+				{
+					Random rnd = new Random();
+					this.securityCode = rnd.Next(9999).ToString();
+					this.messageBot = $"{userName}, a security code has been sent to your email address, please enter the security code received in your email:";
+					string bodySecur  = secCode.CreateConfirmEmail( userName, securityCode );
+					SendTheEmail(bodySecur);
+					if ( sendTheEmailOk == true ) 
+					{
+						ReadMessageUser();				
+						if ( securityCode == messageUser )
+						{clientEmailOk = true;}
+						else { this.messageBotErr = $"{userName}, the security code, you entered, - is incorrect."; 
+						WriteMessageBotErr();}
+					}
+				}
+				else clientEmailOk = true;
 			
 			} while( clientEmailOk == false );
 			
@@ -430,65 +428,78 @@ namespace OrderSushi
 			stringEmail.Append("<br>"+messageBot);
 			Console.WriteLine(messageBot);
 			this.stringEmailCheck = stringEmail.ToString();
-			this.messageBot = "a message with the details of your order has been sent to your email. Please review it carefully.";
 			logger.Info("PrintOrderInfo - OK!");
 		}
 
 		internal void SendTheEmail ( string body )
-		{		
-			var client = new SmtpClient("smtp.yandex.ru", 587);
-			client.UseDefaultCredentials =false;
-			MailAddress from = new MailAddress("ordersushi@ya.ru", botName);
-			MailAddress to = new MailAddress(ClientEmail, userName);
-			MailMessage message = new MailMessage(from, to); 
-			message.Subject = "OrderSushi";
-			message.Body = body;
-			message.IsBodyHtml = true;
-			AlternateView html_view = AlternateView.CreateAlternateViewFromString(message.Body, null, "text/html");
-			if ( getOrderPictureOk == true )
+		{	
+			do
 			{
-				for (int i = 0; i<= numberProductItems; i++)
+				if(InternetConn.ConnectionAvailable(@"http://www.ya.ru"))
 				{
-					try
-					{			
-					LinkedResource imagelink = new LinkedResource(@$"pictures/{i}.jpg", "image/jpg");
-					imagelink.ContentId = $"imageId{i}";
-					imagelink.TransferEncoding = System.Net.Mime.TransferEncoding.Base64;
-					html_view.LinkedResources.Add(imagelink);
-					logger.Debug($"Added image link id{i} to Email");
+					var client = new SmtpClient("smtp.yandex.ru", 587);
+					client.UseDefaultCredentials =false;
+						MailAddress from = new MailAddress("ordersushi@ya.ru", botName);
+					MailAddress to = new MailAddress(ClientEmail, userName);
+					MailMessage message = new MailMessage(from, to); 
+					message.Subject = "OrderSushi";
+					message.Body = body;
+					message.IsBodyHtml = true;
+					AlternateView html_view = AlternateView.CreateAlternateViewFromString(message.Body, null, "text/html");
+					if ( getOrderPictureOk == true )
+					{
+						for (int i = 0; i<= numberProductItems; i++)
+						{
+							try
+							{			
+								LinkedResource imagelink = new LinkedResource(@$"pictures/{i}.jpg", "image/jpg");
+								imagelink.ContentId = $"imageId{i}";
+								imagelink.TransferEncoding = System.Net.Mime.TransferEncoding.Base64;
+								html_view.LinkedResources.Add(imagelink);
+								logger.Debug($"Added image link id{i} to Email");
+							}
+							catch (Exception exc)
+							{
+								logger.Error($"The link to the image id = {i} cannot be added "+ exc);
+							}
+						}
 					}
+					message.SubjectEncoding = Encoding.GetEncoding("UTF-8");
+					message.BodyEncoding = Encoding.GetEncoding("UTF-8");
+					message.AlternateViews.Add(html_view);
+					client.EnableSsl = true;
+					client.DeliveryMethod = SmtpDeliveryMethod.Network;
+					client.Credentials = new NetworkCredential("ordersushi", bodypuss);
+					try
+					{
+						client.Send(message);
+						this.messageBot = $"{userName} a message with the details of your order has been sent to your email. Please review it carefully.";
+						WriteMessageBot();
+						this.sendTheEmailOk = true;
+						logger.Info("SendTheEmail - OK!");
+					}
+					
 					catch (Exception exc)
 					{
-						logger.Error($"The link to the image id = {i} cannot be added "+ exc);
+						messageBotErr = "Could not send e-mail.";
+						WriteMessageBotErr();
+						logger.Fatal("Could not send e-mail. Exception aughtc: " + exc );
+					}
+					finally
+					{
+						DeleteFolder("pictures/");
+						client.Dispose();
 					}
 				}
-			}
-			message.SubjectEncoding = Encoding.GetEncoding("UTF-8");
-            message.BodyEncoding = Encoding.GetEncoding("UTF-8");
-			message.AlternateViews.Add(html_view);
-			client.EnableSsl = true;
-			client.DeliveryMethod = SmtpDeliveryMethod.Network;
-			
-			client.Credentials = new NetworkCredential("ordersushi", bodypuss);
-			try
-			{
-				client.Send(message);
-				WriteMessageBot();
-				this.sendTheEmailOk = true;
-				logger.Info("SendTheEmail - OK!");
-			}
-			
-			catch (Exception exc)
-			{
-				messageBotErr = "Could not send e-mail.";
-				WriteMessageBotErr();
-				logger.Fatal("Could not send e-mail. Exception caught: " + exc );
-			}
-			finally
-			{
-				DeleteFolder("pictures/");
-				client.Dispose();
-			}
+				else 
+				{
+					this.messageBot = $"{userName}, unfortunately, there is no Internet connection and the message cannot be sent to your email address. We will send it later.";
+					logger.Warn("The mail server is unavailable, mail not send!");
+					WriteMessageBot();
+					Thread.Sleep(60000);
+				}
+				
+			} while (sendTheEmailOk == false);
 		}		
     } 
 }
